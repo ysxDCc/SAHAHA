@@ -67,7 +67,10 @@ export async function POST(request: NextRequest) {
       console.error("Reservation insert failed:", error.message);
       return Response.json({ message: "Rezerváciu sa nepodarilo uložiť. Skúste to znova alebo nám zavolajte." }, { status: 500 });
     }
-    await sendNotification(body, seating);
+    await Promise.allSettled([
+      sendNotification(body, seating),
+      sendCustomerReceipt(body, data.id),
+    ]);
     return Response.json({ ok: true, id: data.id }, { status: 201 });
   } catch (error) {
     console.error("Reservation request failed:", error instanceof Error ? error.message : error);
@@ -90,6 +93,32 @@ async function sendNotification(body: ReservationPayload, seating: string) {
     }),
   });
   if (!response.ok) console.error("Reservation notification failed with status", response.status);
+}
+
+async function sendCustomerReceipt(body: ReservationPayload, reservationId: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const customerEmail = text(body.email);
+  if (!apiKey || !customerEmail) return;
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": `reservation-${reservationId}-received`,
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM_EMAIL || "SAHA BAR <onboarding@resend.dev>",
+      to: [customerEmail],
+      subject: "Prijali sme vašu rezerváciu v SAHA BARE",
+      html: `<!doctype html><html lang="sk"><body style="margin:0;background:#080709;color:#f4ece6;font-family:Arial,sans-serif"><div style="max-width:600px;margin:auto;padding:40px 24px"><p style="color:#c9a56d;font-size:12px;letter-spacing:3px">SAHA BAR · ZLATÉ MORAVCE</p><div style="margin-top:24px;padding:32px;border:1px solid rgba(201,165,109,.3);border-radius:20px;background:#12090d"><h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:34px;font-weight:normal">Rezerváciu sme prijali</h1><p>Dobrý deň, ${escapeHtml(text(body.name))}.</p><p style="color:#d6cbca;line-height:1.7">Ďakujeme. Vašu rezerváciu sme prijali a čoskoro vám pošleme potvrdenie alebo informáciu o zmene jej stavu.</p><div style="margin-top:24px;padding:18px;border-radius:14px;background:#080709"><p style="margin:0 0 8px"><strong>Dátum:</strong> ${escapeHtml(text(body.date))}</p><p style="margin:0 0 8px"><strong>Čas:</strong> ${escapeHtml(text(body.time))}</p><p style="margin:0"><strong>Počet osôb:</strong> ${Number(body.guests)}</p></div><p style="margin-top:26px;color:#a99da0;font-size:13px">SAHA BAR · Župná 24, Zlaté Moravce · 037 642 41 11</p></div></div></body></html>`,
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    console.error("Customer reservation receipt failed:", response.status, detail);
+  }
 }
 
 function escapeHtml(value: string) {
