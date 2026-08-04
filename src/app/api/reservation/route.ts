@@ -38,9 +38,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ message: "Neplatný formát požiadavky." }, { status: 400 });
   }
   if (text(body.website)) return Response.json({ ok: true });
-  const startedAt = Number(body.startedAt);
-  if (!Number.isFinite(startedAt) || Date.now() - startedAt < 1500) return Response.json({ message: "Formulár bol odoslaný príliš rýchlo. Skúste to znova." }, { status: 429 });
-
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   const windowStart = Date.now() - 10 * 60 * 1000;
   const recent = (attempts.get(ip) || []).filter((attempt) => attempt > windowStart);
