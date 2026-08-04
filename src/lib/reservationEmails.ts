@@ -1,0 +1,115 @@
+type NotifiableStatus = "confirmed" | "cancelled";
+
+type ReservationForEmail = {
+  id: string;
+  full_name: string;
+  email: string | null;
+  reservation_date: string;
+  reservation_time: string;
+  guests: number;
+};
+
+const messages: Record<NotifiableStatus, { subject: string; heading: string; text: string }> = {
+  confirmed: {
+    subject: "Vaša rezervácia v SAHA BARE je potvrdená",
+    heading: "Rezervácia potvrdená",
+    text: "Tešíme sa na vašu návštevu. Váš stôl je rezervovaný.",
+  },
+  cancelled: {
+    subject: "Informácia o rezervácii v SAHA BARE",
+    heading: "Rezervácia odmietnutá",
+    text: "Mrzí nás to, ale vašu rezerváciu v uvedenom termíne nemôžeme potvrdiť. Pre dohodnutie iného termínu nás, prosím, kontaktujte.",
+  },
+};
+
+const thankYouMessage = {
+  subject: "Ďakujeme za návštevu SAHA BARU",
+  heading: "Ďakujeme za návštevu",
+  text: "Ďakujeme, že ste boli naším hosťom. Budeme sa tešiť na vašu ďalšiu návštevu.",
+};
+
+export async function sendReservationStatusEmail(reservation: ReservationForEmail, status: string) {
+  if (!reservation.email || !(status in messages)) return { sent: false, reason: "not-applicable" } as const;
+  const message = messages[status as NotifiableStatus];
+  const statusResult = await sendEmail(reservation, message, undefined, `reservation-${reservation.id}-${status}`);
+
+  if (status === "confirmed") {
+    const scheduledAt = getThankYouTime(reservation);
+    if (scheduledAt === "too-far") {
+      console.warn("Thank-you email cannot be scheduled more than 30 days in advance.");
+    } else {
+      await sendEmail(reservation, thankYouMessage, scheduledAt, `reservation-${reservation.id}-thank-you`);
+    }
+  }
+  return statusResult;
+}
+
+async function sendEmail(
+  reservation: ReservationForEmail,
+  message: { subject: string; heading: string; text: string },
+  scheduledAt: string | undefined,
+  idempotencyKey: string,
+) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || !reservation.email) return { sent: false, reason: "not-configured" } as const;
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM_EMAIL || "SAHA BAR <onboarding@resend.dev>",
+      to: [reservation.email],
+      subject: message.subject,
+      html: emailTemplate(reservation, message),
+      ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    console.error("Customer email failed:", response.status, detail);
+    return { sent: false, reason: "provider-error" } as const;
+  }
+  return { sent: true, scheduled: Boolean(scheduledAt) } as const;
+}
+
+function getThankYouTime(reservation: ReservationForEmail): string | undefined | "too-far" {
+  const [year, month, day] = reservation.reservation_date.split("-").map(Number);
+  const [hour, minute] = reservation.reservation_time.slice(0, 5).split(":").map(Number);
+  const startsAt = zonedTimeToUtc(year, month, day, hour, minute, "Europe/Bratislava");
+  const sendAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
+  const now = Date.now();
+  if (sendAt.getTime() <= now + 60_000) return undefined;
+  if (sendAt.getTime() > now + 30 * 24 * 60 * 60 * 1000) return "too-far";
+  return sendAt.toISOString();
+}
+
+function zonedTimeToUtc(year: number, month: number, day: number, hour: number, minute: number, timeZone: string) {
+  const target = Date.UTC(year, month - 1, day, hour, minute);
+  const guess = new Date(target);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(guess);
+  const value = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((part) => part.type === type)?.value);
+  const represented = Date.UTC(value("year"), value("month") - 1, value("day"), value("hour"), value("minute"));
+  return new Date(target + (target - represented));
+}
+
+function emailTemplate(reservation: ReservationForEmail, message: { heading: string; text: string }) {
+  const date = new Intl.DateTimeFormat("sk-SK", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${reservation.reservation_date}T12:00:00`));
+  return `<!doctype html><html lang="sk"><body style="margin:0;background:#080709;color:#f4ece6;font-family:Arial,sans-serif"><div style="max-width:600px;margin:auto;padding:40px 24px"><p style="color:#c9a56d;font-size:12px;letter-spacing:3px">SAHA BAR · ZLATÉ MORAVCE</p><div style="margin-top:24px;padding:32px;border:1px solid rgba(201,165,109,.3);border-radius:20px;background:#12090d"><h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:36px;font-weight:normal">${escapeHtml(message.heading)}</h1><p>Dobrý deň, ${escapeHtml(reservation.full_name)}.</p><p style="color:#d6cbca;line-height:1.7">${escapeHtml(message.text)}</p><div style="margin-top:24px;padding:18px;border-radius:14px;background:#080709"><p style="margin:0 0 8px"><strong>Dátum:</strong> ${escapeHtml(date)}</p><p style="margin:0 0 8px"><strong>Čas:</strong> ${escapeHtml(reservation.reservation_time.slice(0, 5))}</p><p style="margin:0"><strong>Počet osôb:</strong> ${reservation.guests}</p></div><p style="margin-top:26px;color:#a99da0;font-size:13px">SAHA BAR · Župná 24, Zlaté Moravce · 037 642 41 11</p></div></div></body></html>`;
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" })[char] || char);
+}
