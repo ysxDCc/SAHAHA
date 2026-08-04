@@ -1,4 +1,4 @@
-type NotifiableStatus = "confirmed" | "cancelled";
+type NotifiableStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
 type ReservationForEmail = {
   id: string;
@@ -10,6 +10,11 @@ type ReservationForEmail = {
 };
 
 const messages: Record<NotifiableStatus, { subject: string; heading: string; text: string }> = {
+  pending: {
+    subject: "Vaša rezervácia v SAHA BARE čaká na potvrdenie",
+    heading: "Rezervácia čaká na potvrdenie",
+    text: "Vašu rezerváciu evidujeme a čoskoro vás budeme informovať o jej potvrdení.",
+  },
   confirmed: {
     subject: "Vaša rezervácia v SAHA BARE je potvrdená",
     heading: "Rezervácia potvrdená",
@@ -20,6 +25,11 @@ const messages: Record<NotifiableStatus, { subject: string; heading: string; tex
     heading: "Rezervácia odmietnutá",
     text: "Mrzí nás to, ale vašu rezerváciu v uvedenom termíne nemôžeme potvrdiť. Pre dohodnutie iného termínu nás, prosím, kontaktujte.",
   },
+  completed: {
+    subject: "Vaša rezervácia v SAHA BARE bola vybavená",
+    heading: "Rezervácia bola vybavená",
+    text: "Ďakujeme za vašu návštevu. Budeme sa tešiť opäť nabudúce.",
+  },
 };
 
 const thankYouMessage = {
@@ -29,29 +39,40 @@ const thankYouMessage = {
 };
 
 export async function sendReservationStatusEmail(reservation: ReservationForEmail, status: string) {
-  if (!reservation.email || !(status in messages)) return { sent: false, reason: "not-applicable" } as const;
+  if (!(status in messages)) return { sent: false, reason: "not-applicable" } as const;
   const message = messages[status as NotifiableStatus];
-  const statusResult = await sendEmail(reservation, message, undefined, `reservation-${reservation.id}-${status}`);
+  const adminEmail = process.env.RESERVATION_NOTIFICATION_EMAIL || "sahabar.admin@gmail.com";
+  const [customerResult, adminResult] = await Promise.allSettled([
+    reservation.email
+      ? sendEmail(reservation, reservation.email, message, undefined, `reservation-${reservation.id}-${status}-customer`)
+      : Promise.resolve({ sent: false, reason: "missing-customer-email" } as const),
+    sendEmail(reservation, adminEmail, {
+      subject: `Zmena stavu rezervácie – ${reservation.full_name}`,
+      heading: `Stav rezervácie: ${statusLabel(status as NotifiableStatus)}`,
+      text: `Rezervácia zákazníka ${reservation.full_name} bola zmenená na stav „${statusLabel(status as NotifiableStatus)}“. E-mail zákazníka: ${reservation.email || "neuvedený"}.`,
+    }, undefined, `reservation-${reservation.id}-${status}-admin`),
+  ]);
 
   if (status === "confirmed") {
     const scheduledAt = getThankYouTime(reservation);
     if (scheduledAt === "too-far") {
       console.warn("Thank-you email cannot be scheduled more than 30 days in advance.");
-    } else {
-      await sendEmail(reservation, thankYouMessage, scheduledAt, `reservation-${reservation.id}-thank-you`);
+    } else if (reservation.email) {
+      await sendEmail(reservation, reservation.email, thankYouMessage, scheduledAt, `reservation-${reservation.id}-thank-you`);
     }
   }
-  return statusResult;
+  return { customerResult, adminResult } as const;
 }
 
 async function sendEmail(
   reservation: ReservationForEmail,
+  recipient: string,
   message: { subject: string; heading: string; text: string },
   scheduledAt: string | undefined,
   idempotencyKey: string,
 ) {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey || !reservation.email) return { sent: false, reason: "not-configured" } as const;
+  if (!apiKey || !recipient) return { sent: false, reason: "not-configured" } as const;
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -62,7 +83,7 @@ async function sendEmail(
     },
     body: JSON.stringify({
       from: process.env.RESEND_FROM_EMAIL || "SAHA BAR <onboarding@resend.dev>",
-      to: [reservation.email],
+      to: [recipient],
       subject: message.subject,
       html: emailTemplate(reservation, message),
       ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
@@ -75,6 +96,15 @@ async function sendEmail(
     return { sent: false, reason: "provider-error" } as const;
   }
   return { sent: true, scheduled: Boolean(scheduledAt) } as const;
+}
+
+function statusLabel(status: NotifiableStatus) {
+  return ({
+    pending: "Čaká na potvrdenie",
+    confirmed: "Potvrdená",
+    cancelled: "Odmietnutá",
+    completed: "Vybavená",
+  } as const)[status];
 }
 
 function getThankYouTime(reservation: ReservationForEmail): string | undefined | "too-far" {
