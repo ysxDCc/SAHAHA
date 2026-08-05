@@ -1,3 +1,5 @@
+import { reservationManageUrl } from "@/lib/reservationManageToken";
+
 type NotifiableStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
 type ReservationForEmail = {
@@ -137,7 +139,8 @@ function zonedTimeToUtc(year: number, month: number, day: number, hour: number, 
 
 function emailTemplate(reservation: ReservationForEmail, message: { heading: string; text: string }) {
   const date = new Intl.DateTimeFormat("sk-SK", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${reservation.reservation_date}T12:00:00`));
-  return `<!doctype html><html lang="sk"><body style="margin:0;background:#080709;color:#f4ece6;font-family:Arial,sans-serif"><div style="max-width:600px;margin:auto;padding:40px 24px"><p style="color:#c9a56d;font-size:12px;letter-spacing:3px">SAHA BAR · ZLATÉ MORAVCE</p><div style="margin-top:24px;padding:32px;border:1px solid rgba(201,165,109,.3);border-radius:20px;background:#12090d"><h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:36px;font-weight:normal">${escapeHtml(message.heading)}</h1><p>Dobrý deň, ${escapeHtml(reservation.full_name)}.</p><p style="color:#d6cbca;line-height:1.7">${escapeHtml(message.text)}</p><div style="margin-top:24px;padding:18px;border-radius:14px;background:#080709"><p style="margin:0 0 8px"><strong>Dátum:</strong> ${escapeHtml(date)}</p><p style="margin:0 0 8px"><strong>Čas:</strong> ${escapeHtml(reservation.reservation_time.slice(0, 5))}</p><p style="margin:0"><strong>Počet osôb:</strong> ${reservation.guests}</p></div><p style="margin-top:26px;color:#a99da0;font-size:13px">SAHA BAR · Župná 24, Zlaté Moravce · 037 642 41 11</p></div></div></body></html>`;
+  const manageUrl = reservationManageUrl(reservation.id);
+  return `<!doctype html><html lang="sk"><body style="margin:0;background:#080709;color:#f4ece6;font-family:Arial,sans-serif"><div style="max-width:600px;margin:auto;padding:40px 24px"><p style="color:#c9a56d;font-size:12px;letter-spacing:3px">SAHA BAR · ZLATÉ MORAVCE</p><div style="margin-top:24px;padding:32px;border:1px solid rgba(201,165,109,.3);border-radius:20px;background:#12090d"><h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:36px;font-weight:normal">${escapeHtml(message.heading)}</h1><p>Dobrý deň, ${escapeHtml(reservation.full_name)}.</p><p style="color:#d6cbca;line-height:1.7">${escapeHtml(message.text)}</p><div style="margin-top:24px;padding:18px;border-radius:14px;background:#080709"><p style="margin:0 0 8px"><strong>Dátum:</strong> ${escapeHtml(date)}</p><p style="margin:0 0 8px"><strong>Čas:</strong> ${escapeHtml(reservation.reservation_time.slice(0, 5))}</p><p style="margin:0"><strong>Počet osôb:</strong> ${reservation.guests}</p></div><p style="margin:26px 0"><a href="${escapeHtml(manageUrl)}" style="display:inline-block;padding:14px 20px;border-radius:12px;background:#c9a56d;color:#110d07;text-decoration:none;font-weight:bold">Spravovať rezerváciu</a></p><p style="margin-top:26px;color:#a99da0;font-size:13px">SAHA BAR · Župná 24, Zlaté Moravce · 037 642 41 11</p></div></div></body></html>`;
 }
 
 function escapeHtml(value: string) {
