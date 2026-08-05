@@ -6,6 +6,7 @@ import { AdminMotion } from "@/components/admin/AdminMotion";
 import { AdminBackground } from "@/components/admin/AdminBackground";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { BLOCKED_SLOT_NAME } from "@/lib/reservationMetadata";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,9 @@ export default async function AdminPage() {
   if (!user || user.email?.toLowerCase() !== process.env.ADMIN_EMAIL?.toLowerCase()) redirect("/admin/login");
 
   const { data, error } = await createSupabaseAdminClient().from("reservations").select("*").order("reservation_date", { ascending: true }).order("reservation_time", { ascending: true });
-  const reservations = (data || []) as Reservation[];
+  const allRows = (data || []) as Reservation[];
+  const reservations = allRows.filter((item) => item.full_name !== BLOCKED_SLOT_NAME);
+  const blockedSlots = allRows.filter((item) => item.full_name === BLOCKED_SLOT_NAME);
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bratislava" }).format(new Date());
 
   return (
@@ -30,7 +33,7 @@ export default async function AdminPage() {
         </AdminMotion>
 
         <AdminMotion delay={0.16}>
-          {error ? <p className="rounded-xl bg-red-400/10 p-4 text-red-200">Rezervácie sa nepodarilo načítať: {error.message}</p> : <AdminDashboard reservations={reservations} today={today} />}
+          {error ? <p className="rounded-xl bg-red-400/10 p-4 text-red-200">Rezervácie sa nepodarilo načítať: {error.message}</p> : <AdminDashboard reservations={reservations} blockedSlots={blockedSlots} today={today} />}
         </AdminMotion>
       </div>
     </main>

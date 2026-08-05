@@ -3,8 +3,9 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, Clock3, Hash, Mail, MapPin, MessageSquareText, Phone, UsersRound, type LucideIcon } from "lucide-react";
-import { updateReservationStatus } from "@/app/admin/actions";
+import { CalendarDays, Clock3, Hash, Mail, MapPin, MessageSquareText, Phone, StickyNote, UsersRound, type LucideIcon } from "lucide-react";
+import { saveAdminNote, updateReservationStatus } from "@/app/admin/actions";
+import { adminNote, customerVisibleNote } from "@/lib/reservationMetadata";
 import { useHydrationSafeReducedMotion } from "@/lib/useReducedMotion";
 import { DeleteReservationButton } from "./DeleteReservationButton";
 
@@ -114,6 +115,12 @@ function ReservationCard({ reservation, index, reduceMotion }: { reservation: Re
 
       {customerNote(reservation.note) && <motion.div initial={reduceMotion ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="admin-visitor-note"><MessageSquareText aria-hidden="true" /><div><span>Poznámka návštevníka</span><p>{customerNote(reservation.note)}</p></div></motion.div>}
 
+      <form action={saveAdminNote} className="admin-internal-note">
+        <input type="hidden" name="id" value={reservation.id} />
+        <label htmlFor={`admin-note-${reservation.id}`}><StickyNote aria-hidden="true" /><span>Interná poznámka · zákazník ju neuvidí</span></label>
+        <div><textarea id={`admin-note-${reservation.id}`} name="adminNote" maxLength={700} defaultValue={adminNote(reservation.note)} placeholder="Napr. narodeniny, VIP hosť, preferovaný stôl…" /><button type="submit">Uložiť poznámku</button></div>
+      </form>
+
       <div className="mt-5 flex flex-wrap items-end justify-end gap-2 border-t border-white/[.07] pt-5">
           <form action={updateReservationStatus} className="flex flex-wrap items-end gap-2">
             <input type="hidden" name="id" value={reservation.id} />
@@ -143,7 +150,7 @@ function reservationPlace(note: string | null) {
 }
 
 function customerNote(note: string | null) {
-  return note?.split("\n").filter((line) => !line.startsWith("Miesto:")).join("\n").trim() || "";
+  return customerVisibleNote(note);
 }
 
 function initials(name: string) {

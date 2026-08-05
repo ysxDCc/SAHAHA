@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getReservationTimeSlots } from "@/data/site";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { reservationManageUrl } from "@/lib/reservationManageToken";
+import { BLOCKED_SLOT_NAME, blockedPlace } from "@/lib/reservationMetadata";
 
 type ReservationPayload = Record<string, unknown>;
 const attempts = new Map<string, number[]>();
@@ -67,6 +68,24 @@ export async function POST(request: NextRequest) {
   const storedNote = [`Miesto: ${seating}`, text(body.note)].filter(Boolean).join("\n");
   try {
     const supabase = createSupabaseAdminClient();
+    const { data: blockedSlots, error: blockError } = await supabase
+      .from("reservations")
+      .select("id,note")
+      .eq("full_name", BLOCKED_SLOT_NAME)
+      .eq("reservation_date", text(body.date))
+      .eq("reservation_time", text(body.time));
+    if (blockError) {
+      console.error("Blocked slot check failed:", blockError.message);
+      return Response.json({ message: "Dostupnosť termínu sa nepodarilo overiť. Skúste to znova." }, { status: 503 });
+    }
+    const isBlocked = (blockedSlots || []).some((slot) => {
+      const place = blockedPlace(slot.note);
+      return place === "all" || place === seating;
+    });
+    if (isBlocked) {
+      return Response.json({ message: "Tento termín je uzatvorený. Vyberte si, prosím, iný čas alebo miesto." }, { status: 409 });
+    }
+
     const { data, error } = await supabase.from("reservations").insert({
       full_name: text(body.name),
       phone: text(body.phone),
