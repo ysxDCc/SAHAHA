@@ -1,9 +1,11 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getReservationTimeSlots } from "@/data/site";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type ReservationPayload = Record<string, unknown>;
 const attempts = new Map<string, number[]>();
+const RESERVATION_COOLDOWN_COOKIE = "saha_reservation_cooldown";
+const RESERVATION_COOLDOWN_SECONDS = 5 * 60;
 
 function text(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -31,6 +33,18 @@ function validate(body: ReservationPayload) {
 }
 
 export async function POST(request: NextRequest) {
+  if (request.cookies.get(RESERVATION_COOLDOWN_COOKIE)?.value === "1") {
+    return NextResponse.json(
+      { message: "Rezerváciu ste už nedávno odoslali. Pred ďalším pokusom počkajte 5 minút." },
+      { status: 429 },
+    );
+  }
+
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > 20_000) {
+    return NextResponse.json({ message: "Odoslané údaje sú príliš veľké." }, { status: 413 });
+  }
+
   let body: ReservationPayload;
   try {
     body = await request.json();
@@ -71,7 +85,17 @@ export async function POST(request: NextRequest) {
       sendNotification(body, seating),
       sendCustomerReceipt(body, data.id),
     ]);
-    return Response.json({ ok: true, id: data.id }, { status: 201 });
+    const response = NextResponse.json({ ok: true, id: data.id }, { status: 201 });
+    response.cookies.set({
+      name: RESERVATION_COOLDOWN_COOKIE,
+      value: "1",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: RESERVATION_COOLDOWN_SECONDS,
+    });
+    return response;
   } catch (error) {
     console.error("Reservation request failed:", error instanceof Error ? error.message : error);
     return Response.json({ message: "Rezervačný systém nie je správne nastavený. Kontaktujte nás, prosím, telefonicky." }, { status: 503 });
