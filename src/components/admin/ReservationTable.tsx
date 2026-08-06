@@ -75,7 +75,7 @@ function ReservationCard({ reservation, index, reduceMotion, canDelete }: { rese
       exit={reduceMotion ? undefined : { opacity: 0, x: 28, scale: 0.97 }}
       whileHover={reduceMotion ? undefined : { y: -6, scale: 1.006, borderColor: "rgba(164,196,130,0.38)", boxShadow: "0 24px 70px rgba(0,0,0,.32), 0 0 40px rgba(112,154,91,.09)" }}
       transition={{ duration: 0.48, delay: Math.min(index * 0.045, 0.3), ease: [0.16, 1, 0.3, 1], layout: { duration: 0.4 } }}
-      className="admin-reservation-card rounded-2xl border border-white/10 p-5 shadow-[0_16px_50px_rgba(0,0,0,0.12)]"
+      className={`admin-reservation-card ${reservation.guests >= 10 ? "admin-reservation-card--priority" : ""} rounded-2xl border border-white/10 p-5 shadow-[0_16px_50px_rgba(0,0,0,0.12)]`}
     >
       {flight && createPortal(
         <AnimatePresence>
@@ -101,6 +101,7 @@ function ReservationCard({ reservation, index, reduceMotion, canDelete }: { rese
         </div>
         <motion.span ref={badgeRef} key={displayedStatus} initial={reduceMotion ? false : { scale: 0.86, opacity: 0.35 }} animate={{ scale: 1, opacity: 1 }} className="admin-status-badge rounded-full px-3 py-1 text-xs">{labels[displayedStatus]}</motion.span>
       </div>
+      {reservation.guests >= 10 && <div className="admin-large-group-alert"><UsersRound aria-hidden="true" /><div><span>PRIORITNÁ REZERVÁCIA</span><strong>Veľká skupina · {reservation.guests} hostí</strong><small>Skontrolujte kapacitu a prípravu stolov.</small></div></div>}
 
       <motion.div className="admin-visitor-grid" initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: reduceMotion ? 0 : 0.045, delayChildren: 0.08 } } }}>
         <Info icon={Phone} label="Telefón"><a href={`tel:${reservation.phone}`}>{reservation.phone}</a></Info>

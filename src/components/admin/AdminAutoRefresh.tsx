@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 const refreshInterval = 10_000;
 
-export function AdminAutoRefresh({ latestReservationId, latestCreatedAt }: { latestReservationId: string; latestCreatedAt: string }) {
+export function AdminAutoRefresh({ latestReservationId, latestCreatedAt, latestGuests, latestName }: { latestReservationId: string; latestCreatedAt: string; latestGuests: number; latestName: string }) {
   const router = useRouter();
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [notice, setNotice] = useState("");
@@ -16,8 +16,9 @@ export function AdminAutoRefresh({ latestReservationId, latestCreatedAt }: { lat
   useEffect(() => {
     const isNewReservation = Boolean(latestReservationId) && latestReservationId !== latestIdRef.current && latestCreatedAt > latestCreatedAtRef.current;
     if (isNewReservation) {
-      setNotice("Prišla nová rezervácia");
-      if (soundEnabled) playNotificationSound();
+      const isLargeGroup = latestGuests >= 10;
+      setNotice(isLargeGroup ? `Priorita: ${latestName} · ${latestGuests} hostí` : "Prišla nová rezervácia");
+      if (soundEnabled) playNotificationSound(isLargeGroup);
       const timeout = window.setTimeout(() => setNotice(""), 7000);
       latestIdRef.current = latestReservationId;
       latestCreatedAtRef.current = latestCreatedAt;
@@ -25,7 +26,7 @@ export function AdminAutoRefresh({ latestReservationId, latestCreatedAt }: { lat
     }
     latestIdRef.current = latestReservationId;
     latestCreatedAtRef.current = latestCreatedAt;
-  }, [latestReservationId, latestCreatedAt, soundEnabled]);
+  }, [latestReservationId, latestCreatedAt, latestGuests, latestName, soundEnabled]);
 
   useEffect(() => {
     const refresh = () => {
@@ -53,14 +54,14 @@ export function AdminAutoRefresh({ latestReservationId, latestCreatedAt }: { lat
   </div>;
 }
 
-function playNotificationSound() {
+function playNotificationSound(priority = false) {
   const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AudioContextClass) return;
   const context = new AudioContextClass();
   const oscillator = context.createOscillator();
   const gain = context.createGain();
-  oscillator.frequency.setValueAtTime(660, context.currentTime);
-  oscillator.frequency.exponentialRampToValueAtTime(880, context.currentTime + 0.18);
+  oscillator.frequency.setValueAtTime(priority ? 520 : 660, context.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(priority ? 1040 : 880, context.currentTime + 0.18);
   gain.gain.setValueAtTime(0.0001, context.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.16, context.currentTime + 0.025);
   gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.35);

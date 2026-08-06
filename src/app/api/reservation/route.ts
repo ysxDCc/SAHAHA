@@ -127,14 +127,15 @@ async function sendNotification(body: ReservationPayload, seating: string) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.RESERVATION_NOTIFICATION_EMAIL;
   if (!apiKey || !to) return;
+  const isLargeGroup = Number(body.guests) >= 10;
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: process.env.RESEND_FROM_EMAIL || "SAHA BAR <onboarding@resend.dev>",
       to: [to],
-      subject: `Nová rezervácia – ${text(body.name)}, ${text(body.date)} ${text(body.time)}`,
-      html: `<h2>Nová rezervácia SAHA BAR</h2><p><strong>Meno:</strong> ${escapeHtml(text(body.name))}</p><p><strong>Telefón:</strong> ${escapeHtml(text(body.phone))}</p><p><strong>E-mail:</strong> ${escapeHtml(text(body.email) || "neuvedený")}</p><p><strong>Dátum:</strong> ${escapeHtml(text(body.date))}</p><p><strong>Čas:</strong> ${escapeHtml(text(body.time))}</p><p><strong>Počet osôb:</strong> ${Number(body.guests)}</p><p><strong>Miesto:</strong> ${escapeHtml(seating)}</p><p><strong>Príležitosť:</strong> ${escapeHtml(text(body.occasion) || "bežná návšteva")}</p><p><strong>Poznámka:</strong> ${escapeHtml(text(body.note) || "—")}</p>`,
+      subject: `${isLargeGroup ? "⚠️ VEĽKÁ SKUPINA – " : "Nová rezervácia – "}${text(body.name)}, ${text(body.date)} ${text(body.time)}`,
+      html: `${isLargeGroup ? `<div style="padding:16px;margin-bottom:20px;border:2px solid #c9a56d;border-radius:12px;background:#fff8e8;color:#5a3a00;font-weight:bold">⚠️ PRIORITNÁ REZERVÁCIA PRE ${Number(body.guests)} HOSTÍ – vyžaduje kontrolu kapacity.</div>` : ""}<h2>Nová rezervácia SAHA BAR</h2><p><strong>Meno:</strong> ${escapeHtml(text(body.name))}</p><p><strong>Telefón:</strong> ${escapeHtml(text(body.phone))}</p><p><strong>E-mail:</strong> ${escapeHtml(text(body.email) || "neuvedený")}</p><p><strong>Dátum:</strong> ${escapeHtml(text(body.date))}</p><p><strong>Čas:</strong> ${escapeHtml(text(body.time))}</p><p><strong>Počet osôb:</strong> ${Number(body.guests)}</p><p><strong>Miesto:</strong> ${escapeHtml(seating)}</p><p><strong>Príležitosť:</strong> ${escapeHtml(text(body.occasion) || "bežná návšteva")}</p><p><strong>Poznámka:</strong> ${escapeHtml(text(body.note) || "—")}</p>`,
     }),
   });
   if (!response.ok) console.error("Reservation notification failed with status", response.status);

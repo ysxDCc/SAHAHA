@@ -404,6 +404,14 @@ h2 em, h1 em { color: var(--pink); font-weight: 500; }
 .admin-rating-badge { display: flex; align-items: center; gap: .8rem; margin-top: 1rem; padding: .8rem 1rem; border: 1px solid rgba(240,201,114,.2); border-radius: 13px; background: rgba(201,165,109,.07); }
 .admin-rating-badge span { color: #f0c972; letter-spacing: .08em; }
 .admin-rating-badge strong { color: rgba(255,255,255,.7); font-size: .75rem; }
+.admin-reservation-card--priority { border-color: rgba(240,201,114,.42) !important; box-shadow: 0 20px 65px rgba(201,165,109,.1), inset 3px 0 0 #d6b36a !important; }
+.admin-large-group-alert { display: flex; align-items: center; gap: .85rem; margin-top: 1rem; padding: .9rem 1rem; border: 1px solid rgba(240,201,114,.28); border-radius: 14px; background: linear-gradient(100deg,rgba(201,165,109,.16),rgba(201,165,109,.045)); animation: admin-priority-glow 2.8s ease-in-out infinite alternate; }
+.admin-large-group-alert > svg { width: 1.3rem; color: #f0c972; }
+.admin-large-group-alert div { display: grid; }
+.admin-large-group-alert span { color: #f0c972; font-size: .58rem; font-weight: 800; letter-spacing: .16em; }
+.admin-large-group-alert strong { font-size: .9rem; }
+.admin-large-group-alert small { color: rgba(255,255,255,.5); font-size: .68rem; }
+@keyframes admin-priority-glow { to { border-color: rgba(240,201,114,.52); box-shadow: 0 0 28px rgba(201,165,109,.09); } }
 .rating-page { min-height: 100svh; display: grid; place-items: center; padding: 1.5rem; background: radial-gradient(circle at 50% 10%, rgba(100,137,82,.25), transparent 32rem), linear-gradient(145deg,#06100a,#080709 62%); }
 .rating-card { width: min(100%, 620px); padding: clamp(2rem, 6vw, 4rem); border: 1px solid rgba(201,165,109,.3); border-radius: 28px; background: rgba(11,15,12,.8); text-align: center; box-shadow: 0 30px 100px rgba(0,0,0,.45); backdrop-filter: blur(22px); }
 .rating-card .eyebrow { justify-content: center; }

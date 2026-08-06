@@ -43,7 +43,7 @@ export function AdminDashboard({ reservations, blockedSlots, today, role }: { re
   ];
 
   return <>
-    <AdminAutoRefresh latestReservationId={latest?.id || ""} latestCreatedAt={latest?.created_at || ""} />
+    <AdminAutoRefresh latestReservationId={latest?.id || ""} latestCreatedAt={latest?.created_at || ""} latestGuests={latest?.guests || 0} latestName={latest?.full_name || ""} />
 
     <div className="admin-stats-grid">
       {stats.map(({ label, value, icon: Icon }) => <div key={label} className="admin-stat-card"><div><span>{label}</span><Icon aria-hidden="true" /></div><strong>{value}</strong></div>)}
