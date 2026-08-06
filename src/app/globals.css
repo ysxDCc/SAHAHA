@@ -390,6 +390,33 @@ h2 em, h1 em { color: var(--pink); font-weight: 500; }
 .button:disabled { cursor: not-allowed; opacity: .55; }
 .icon-button { display: grid; width: 48px; height: 48px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,.04); color: var(--cream); cursor: pointer; }
 
+/* Admin team and guest feedback */
+.admin-team-panel { margin-top: 2rem; padding: clamp(1.4rem, 3vw, 2.2rem); border: 1px solid rgba(201,221,169,.18); border-radius: 24px; background: rgba(5,16,10,.72); box-shadow: 0 24px 70px rgba(0,0,0,.25); backdrop-filter: blur(20px); }
+.admin-team-panel > div:first-child p { margin: 0; color: #c9dda9; font-size: .65rem; font-weight: 700; letter-spacing: .2em; }
+.admin-team-panel h2 { margin: .4rem 0; font-size: 2.3rem; }
+.admin-team-panel > div:first-child span { color: rgba(255,255,255,.55); font-size: .82rem; }
+.admin-team-panel > form { display: grid; grid-template-columns: 1fr 1fr auto; gap: .7rem; margin-top: 1.4rem; }
+.admin-team-panel input { min-width: 0; padding: .85rem 1rem; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(0,0,0,.35); color: white; }
+.admin-team-panel button { padding: .8rem 1.1rem; border: 1px solid rgba(201,221,169,.3); border-radius: 12px; background: #b8d49d; color: #07100a; font-weight: 700; cursor: pointer; }
+.admin-team-list { display: grid; gap: .55rem; margin-top: 1rem; }
+.admin-team-list > div { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; border-radius: 12px; background: rgba(255,255,255,.035); }
+.admin-team-list button { padding: .55rem .8rem; border-color: rgba(248,113,113,.35); background: transparent; color: #fecaca; }
+.admin-rating-badge { display: flex; align-items: center; gap: .8rem; margin-top: 1rem; padding: .8rem 1rem; border: 1px solid rgba(240,201,114,.2); border-radius: 13px; background: rgba(201,165,109,.07); }
+.admin-rating-badge span { color: #f0c972; letter-spacing: .08em; }
+.admin-rating-badge strong { color: rgba(255,255,255,.7); font-size: .75rem; }
+.rating-page { min-height: 100svh; display: grid; place-items: center; padding: 1.5rem; background: radial-gradient(circle at 50% 10%, rgba(100,137,82,.25), transparent 32rem), linear-gradient(145deg,#06100a,#080709 62%); }
+.rating-card { width: min(100%, 620px); padding: clamp(2rem, 6vw, 4rem); border: 1px solid rgba(201,165,109,.3); border-radius: 28px; background: rgba(11,15,12,.8); text-align: center; box-shadow: 0 30px 100px rgba(0,0,0,.45); backdrop-filter: blur(22px); }
+.rating-card .eyebrow { justify-content: center; }
+.rating-card h1 { margin: 1rem 0; font-size: clamp(3rem, 8vw, 5.2rem); }
+.rating-card > p:not(.eyebrow) { color: rgba(244,236,230,.7); }
+.rating-card > a { display: inline-block; margin-top: 2rem; color: var(--gold); text-decoration: underline; text-underline-offset: 5px; }
+.rating-stars { display: flex; justify-content: center; gap: clamp(.35rem, 2vw, .8rem); margin-top: 2rem; }
+.rating-stars button { width: clamp(48px, 11vw, 68px); aspect-ratio: 1; border: 1px solid rgba(201,165,109,.3); border-radius: 16px; background: rgba(255,255,255,.035); color: #f0c972; cursor: pointer; transition: transform .25s var(--ease), background .25s ease, box-shadow .25s ease; }
+.rating-stars button:hover { transform: translateY(-7px) scale(1.06); background: rgba(201,165,109,.12); box-shadow: 0 14px 35px rgba(201,165,109,.12); }
+.rating-stars span { display: block; font-size: 1.55rem; }
+.rating-stars small { color: rgba(255,255,255,.5); }
+@media (max-width: 700px) { .admin-team-panel > form { grid-template-columns: 1fr; } }
+
 /* Hero */
 .hero { position: relative; min-height: 100svh; height: max(47rem, 100svh); display: flex; align-items: center; overflow: hidden; background: var(--surface); }
 .hero__media { position: absolute; inset: 0; overflow: hidden; }

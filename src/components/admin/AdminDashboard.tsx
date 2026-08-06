@@ -6,10 +6,11 @@ import { createBlockedSlot, deleteBlockedSlot } from "@/app/admin/actions";
 import { blockedPlace } from "@/lib/reservationMetadata";
 import { ReservationTable, type Reservation } from "./ReservationTable";
 import { AdminAutoRefresh } from "./AdminAutoRefresh";
+import type { AdminRole } from "@/lib/adminAuth";
 
 type StatusFilter = "all" | Reservation["status"];
 
-export function AdminDashboard({ reservations, blockedSlots, today }: { reservations: Reservation[]; blockedSlots: Reservation[]; today: string }) {
+export function AdminDashboard({ reservations, blockedSlots, today, role }: { reservations: Reservation[]; blockedSlots: Reservation[]; today: string; role: AdminRole }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "upcoming">("upcoming");
@@ -55,7 +56,7 @@ export function AdminDashboard({ reservations, blockedSlots, today }: { reservat
       <div><TrendingUp aria-hidden="true" /><span>Odmietnuté</span><strong>{reservations.length ? Math.round((reservations.filter((item) => item.status === "cancelled").length / reservations.length) * 100) : 0}%</strong></div>
     </section>
 
-    <section className="admin-blocked-slots">
+    {role === "owner" && <section className="admin-blocked-slots">
       <div className="admin-blocked-heading"><div><Ban aria-hidden="true" /><div><p>UZATVORENÉ TERMÍNY</p><h2>Blokovanie rezervácií</h2></div></div><span>{blockedSlots.length} blokovaní</span></div>
       <form action={createBlockedSlot} className="admin-block-form">
         <label><span>Dátum</span><input type="date" name="date" min={today} defaultValue={today} required /></label>
@@ -64,7 +65,7 @@ export function AdminDashboard({ reservations, blockedSlots, today }: { reservat
         <button type="submit"><Ban aria-hidden="true" />Zablokovať termín</button>
       </form>
       {blockedSlots.length > 0 && <div className="admin-block-list">{blockedSlots.map((slot) => <div key={slot.id}><div><strong>{formatShortDate(slot.reservation_date)} · {slot.reservation_time.slice(0, 5)}</strong><span>{blockedPlaceLabel(blockedPlace(slot.note))}</span></div><form action={deleteBlockedSlot}><input type="hidden" name="id" value={slot.id} /><button type="submit" aria-label={`Odblokovať ${slot.reservation_date} ${slot.reservation_time.slice(0, 5)}`}><Trash2 aria-hidden="true" />Odblokovať</button></form></div>)}</div>}
-    </section>
+    </section>}
 
     <section className="admin-calendar-panel">
       <div className="admin-calendar-heading"><div><p>PREHĽAD OBSADENOSTI</p><h2>{formatMonth(month)}</h2></div><div><button type="button" aria-label="Predchádzajúci mesiac" onClick={() => setMonth(shiftMonth(month, -1))}><ChevronLeft /></button><button type="button" onClick={() => { setMonth(today.slice(0, 7)); setSelectedDate(""); }}>Dnes</button><button type="button" aria-label="Nasledujúci mesiac" onClick={() => setMonth(shiftMonth(month, 1))}><ChevronRight /></button></div></div>
@@ -87,7 +88,7 @@ export function AdminDashboard({ reservations, blockedSlots, today }: { reservat
       <p>{filtered.length} z {reservations.length} rezervácií{selectedDate && <> · <button type="button" onClick={() => setSelectedDate("")}>zrušiť dátum {selectedDate}</button></>}</p>
     </section>
 
-    <ReservationTable reservations={filtered} />
+    <ReservationTable reservations={filtered} canDelete={role === "owner"} />
   </>;
 }
 

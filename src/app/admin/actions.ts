@@ -6,19 +6,17 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendReservationStatusEmail } from "@/lib/reservationEmails";
 import { BLOCKED_SLOT_NAME, blockedSlotNote, withAdminNote } from "@/lib/reservationMetadata";
-
-async function requireAdmin() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.email?.toLowerCase() !== process.env.ADMIN_EMAIL?.toLowerCase()) redirect("/admin/login");
-}
+import { adminRoleFor, requireAdmin } from "@/lib/adminAuth";
 
 export async function login(formData: FormData) {
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error || email.toLowerCase() !== process.env.ADMIN_EMAIL?.toLowerCase()) redirect("/admin/login?error=1");
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error || !adminRoleFor(data.user)) {
+    await supabase.auth.signOut();
+    redirect("/admin/login?error=1");
+  }
   redirect("/admin");
 }
 
@@ -51,7 +49,7 @@ export async function updateReservationStatus(formData: FormData) {
 }
 
 export async function deleteReservation(formData: FormData) {
-  await requireAdmin();
+  await requireAdmin("owner");
   const id = String(formData.get("id") || "").trim();
   if (!id) throw new Error("Chýba ID rezervácie.");
 
@@ -78,7 +76,7 @@ export async function saveAdminNote(formData: FormData) {
 }
 
 export async function createBlockedSlot(formData: FormData) {
-  await requireAdmin();
+  await requireAdmin("owner");
   const date = String(formData.get("date") || "").trim();
   const time = String(formData.get("time") || "").trim();
   const place = String(formData.get("place") || "all").trim();
@@ -103,10 +101,32 @@ export async function createBlockedSlot(formData: FormData) {
 }
 
 export async function deleteBlockedSlot(formData: FormData) {
-  await requireAdmin();
+  await requireAdmin("owner");
   const id = String(formData.get("id") || "").trim();
   if (!id) throw new Error("Chýba ID blokovaného termínu.");
   const { error } = await createSupabaseAdminClient().from("reservations").delete().eq("id", id).eq("full_name", BLOCKED_SLOT_NAME);
   if (error) throw new Error(`Blokovanie sa nepodarilo odstrániť: ${error.message}`);
+  revalidatePath("/admin");
+}
+
+export async function createStaffAccount(formData: FormData) {
+  await requireAdmin("owner");
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 10) throw new Error("Zadajte platný e-mail a heslo s aspoň 10 znakmi.");
+  const { error } = await createSupabaseAdminClient().auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { role: "staff" } });
+  if (error) throw new Error(`Účet personálu sa nepodarilo vytvoriť: ${error.message}`);
+  revalidatePath("/admin");
+}
+
+export async function deleteStaffAccount(formData: FormData) {
+  const { user } = await requireAdmin("owner");
+  const id = String(formData.get("id") || "").trim();
+  if (!id || id === user.id) throw new Error("Tento účet nie je možné odstrániť.");
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin.auth.admin.getUserById(id);
+  if (data.user?.app_metadata?.role !== "staff") throw new Error("Odstrániť možno iba účet personálu.");
+  const { error } = await admin.auth.admin.deleteUser(id);
+  if (error) throw new Error(`Účet sa nepodarilo odstrániť: ${error.message}`);
   revalidatePath("/admin");
 }

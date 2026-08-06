@@ -3,6 +3,7 @@ import { login } from "../actions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AdminMotion } from "@/components/admin/AdminMotion";
 import { AdminBackground } from "@/components/admin/AdminBackground";
+import { adminRoleFor } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
   const params = await searchParams;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (user?.email?.toLowerCase() === process.env.ADMIN_EMAIL?.toLowerCase()) redirect("/admin");
+  if (adminRoleFor(user)) redirect("/admin");
 
   return (
     <main className="admin-surface flex min-h-screen items-center justify-center px-5 text-[#f5efe5]">

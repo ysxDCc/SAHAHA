@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, Clock3, Hash, Mail, MapPin, MessageSquareText, PartyPopper, Phone, StickyNote, UsersRound, type LucideIcon } from "lucide-react";
 import { saveAdminNote, updateReservationStatus } from "@/app/admin/actions";
-import { adminNote, customerVisibleNote, reservationOccasion } from "@/lib/reservationMetadata";
+import { adminNote, customerRating, customerVisibleNote, reservationOccasion } from "@/lib/reservationMetadata";
 import { useHydrationSafeReducedMotion } from "@/lib/useReducedMotion";
 import { DeleteReservationButton } from "./DeleteReservationButton";
 
@@ -32,17 +32,17 @@ const labels: Record<Reservation["status"], string> = {
 
 type Flight = { key: number; label: string; fromX: number; fromY: number; toX: number; toY: number };
 
-export function ReservationTable({ reservations }: { reservations: Reservation[] }) {
+export function ReservationTable({ reservations, canDelete }: { reservations: Reservation[]; canDelete: boolean }) {
   const reduceMotion = useHydrationSafeReducedMotion();
   if (!reservations.length) return <motion.div initial={reduceMotion ? false : { opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="rounded-2xl border border-white/10 bg-white/[.03] p-10 text-center text-white/50">Zatiaľ neboli vytvorené žiadne rezervácie.</motion.div>;
   return (
     <motion.div className="grid gap-4" layout>
-      {reservations.map((reservation, index) => <ReservationCard key={reservation.id} reservation={reservation} index={index} reduceMotion={reduceMotion} />)}
+      {reservations.map((reservation, index) => <ReservationCard key={reservation.id} reservation={reservation} index={index} reduceMotion={reduceMotion} canDelete={canDelete} />)}
     </motion.div>
   );
 }
 
-function ReservationCard({ reservation, index, reduceMotion }: { reservation: Reservation; index: number; reduceMotion: boolean }) {
+function ReservationCard({ reservation, index, reduceMotion, canDelete }: { reservation: Reservation; index: number; reduceMotion: boolean; canDelete: boolean }) {
   const [selectedStatus, setSelectedStatus] = useState(reservation.status);
   const [displayedStatus, setDisplayedStatus] = useState(reservation.status);
   const [flight, setFlight] = useState<Flight | null>(null);
@@ -115,6 +115,7 @@ function ReservationCard({ reservation, index, reduceMotion }: { reservation: Re
 
       {customerNote(reservation.note) && <motion.div initial={reduceMotion ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="admin-visitor-note"><MessageSquareText aria-hidden="true" /><div><span>Poznámka návštevníka</span><p>{customerNote(reservation.note)}</p></div></motion.div>}
       {reservationOccasion(reservation.note) && <div className="admin-occasion-badge"><PartyPopper aria-hidden="true" /><span>Špeciálna udalosť</span><strong>{reservationOccasion(reservation.note)}</strong></div>}
+      {customerRating(reservation.note) && <div className="admin-rating-badge"><span aria-hidden="true">{"★".repeat(customerRating(reservation.note) || 0)}</span><strong>Hodnotenie návštevy {customerRating(reservation.note)}/5</strong></div>}
 
       <form action={saveAdminNote} className="admin-internal-note">
         <input type="hidden" name="id" value={reservation.id} />
@@ -128,7 +129,7 @@ function ReservationCard({ reservation, index, reduceMotion }: { reservation: Re
             <select ref={selectRef} name="status" value={selectedStatus} onChange={(event) => chooseStatus(event.target.value as Reservation["status"])} className="admin-status-select rounded-xl border border-white/10 bg-black/55 px-4 py-3 text-sm"><option value="pending">Čaká</option><option value="confirmed">Potvrdená</option><option value="cancelled">Odmietnutá</option><option value="completed">Vybavená</option></select>
             <button type="submit" className="admin-save-button rounded-xl px-5 py-3 text-sm font-bold text-[#07100a]">Uložiť</button>
           </form>
-          <DeleteReservationButton id={reservation.id} name={reservation.full_name} />
+          {canDelete && <DeleteReservationButton id={reservation.id} name={reservation.full_name} />}
       </div>
     </motion.article>
   );

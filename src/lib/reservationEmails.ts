@@ -1,4 +1,4 @@
-import { reservationManageUrl } from "@/lib/reservationManageToken";
+import { createReservationManageToken, reservationManageUrl } from "@/lib/reservationManageToken";
 
 type NotifiableStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
@@ -140,7 +140,15 @@ function zonedTimeToUtc(year: number, month: number, day: number, hour: number, 
 function emailTemplate(reservation: ReservationForEmail, message: { heading: string; text: string }) {
   const date = new Intl.DateTimeFormat("sk-SK", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${reservation.reservation_date}T12:00:00`));
   const manageUrl = reservationManageUrl(reservation.id);
-  return `<!doctype html><html lang="sk"><body style="margin:0;background:#080709;color:#f4ece6;font-family:Arial,sans-serif"><div style="max-width:600px;margin:auto;padding:40px 24px"><p style="color:#c9a56d;font-size:12px;letter-spacing:3px">SAHA BAR · ZLATÉ MORAVCE</p><div style="margin-top:24px;padding:32px;border:1px solid rgba(201,165,109,.3);border-radius:20px;background:#12090d"><h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:36px;font-weight:normal">${escapeHtml(message.heading)}</h1><p>Dobrý deň, ${escapeHtml(reservation.full_name)}.</p><p style="color:#d6cbca;line-height:1.7">${escapeHtml(message.text)}</p><div style="margin-top:24px;padding:18px;border-radius:14px;background:#080709"><p style="margin:0 0 8px"><strong>Dátum:</strong> ${escapeHtml(date)}</p><p style="margin:0 0 8px"><strong>Čas:</strong> ${escapeHtml(reservation.reservation_time.slice(0, 5))}</p><p style="margin:0"><strong>Počet osôb:</strong> ${reservation.guests}</p></div><p style="margin:26px 0"><a href="${escapeHtml(manageUrl)}" style="display:inline-block;padding:14px 20px;border-radius:12px;background:#c9a56d;color:#110d07;text-decoration:none;font-weight:bold">Spravovať rezerváciu</a></p><p style="margin-top:26px;color:#a99da0;font-size:13px">SAHA BAR · Župná 24, Zlaté Moravce · 037 642 41 11</p></div></div></body></html>`;
+  const rating = message === thankYouMessage ? ratingButtons(reservation.id) : "";
+  return `<!doctype html><html lang="sk"><body style="margin:0;background:#080709;color:#f4ece6;font-family:Arial,sans-serif"><div style="max-width:600px;margin:auto;padding:40px 24px"><p style="color:#c9a56d;font-size:12px;letter-spacing:3px">SAHA BAR · ZLATÉ MORAVCE</p><div style="margin-top:24px;padding:32px;border:1px solid rgba(201,165,109,.3);border-radius:20px;background:#12090d"><h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:36px;font-weight:normal">${escapeHtml(message.heading)}</h1><p>Dobrý deň, ${escapeHtml(reservation.full_name)}.</p><p style="color:#d6cbca;line-height:1.7">${escapeHtml(message.text)}</p><div style="margin-top:24px;padding:18px;border-radius:14px;background:#080709"><p style="margin:0 0 8px"><strong>Dátum:</strong> ${escapeHtml(date)}</p><p style="margin:0 0 8px"><strong>Čas:</strong> ${escapeHtml(reservation.reservation_time.slice(0, 5))}</p><p style="margin:0"><strong>Počet osôb:</strong> ${reservation.guests}</p></div>${rating}<p style="margin:26px 0"><a href="${escapeHtml(manageUrl)}" style="display:inline-block;padding:14px 20px;border-radius:12px;background:#c9a56d;color:#110d07;text-decoration:none;font-weight:bold">Spravovať rezerváciu</a></p><p style="margin-top:26px;color:#a99da0;font-size:13px">SAHA BAR · Župná 24, Zlaté Moravce · 037 642 41 11</p></div></div></body></html>`;
+}
+
+function ratingButtons(id: string) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sahabarrr.vercel.app";
+  const token = createReservationManageToken(id);
+  const stars = [1, 2, 3, 4, 5].map((value) => `<a href="${siteUrl}/hodnotenie/${encodeURIComponent(id)}?token=${encodeURIComponent(token)}&rating=${value}" style="display:inline-block;margin:4px;padding:10px 12px;border:1px solid #c9a56d;border-radius:10px;color:#f0c972;text-decoration:none;font-size:22px">★<small style="display:block;font-size:10px;color:#d6cbca">${value}</small></a>`).join("");
+  return `<div style="margin-top:26px;text-align:center"><p style="color:#d6cbca">Ako ste boli spokojní?</p>${stars}</div>`;
 }
 
 function escapeHtml(value: string) {
