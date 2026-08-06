@@ -3,9 +3,9 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, Clock3, Hash, Mail, MapPin, MessageSquareText, PartyPopper, Phone, StickyNote, UsersRound, type LucideIcon } from "lucide-react";
+import { CalendarDays, Clock3, Hash, Mail, MapPin, MessageSquareText, PartyPopper, Phone, Sparkles, StickyNote, UsersRound, type LucideIcon } from "lucide-react";
 import { saveAdminNote, updateReservationStatus } from "@/app/admin/actions";
-import { adminNote, customerRating, customerVisibleNote, reservationOccasion } from "@/lib/reservationMetadata";
+import { adminNote, customerRating, customerVisibleNote, reservationOccasion, reservationSpecialRequests } from "@/lib/reservationMetadata";
 import { useHydrationSafeReducedMotion } from "@/lib/useReducedMotion";
 import { DeleteReservationButton } from "./DeleteReservationButton";
 
@@ -116,6 +116,7 @@ function ReservationCard({ reservation, index, reduceMotion, canDelete }: { rese
 
       {customerNote(reservation.note) && <motion.div initial={reduceMotion ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="admin-visitor-note"><MessageSquareText aria-hidden="true" /><div><span>Poznámka návštevníka</span><p>{customerNote(reservation.note)}</p></div></motion.div>}
       {reservationOccasion(reservation.note) && <div className="admin-occasion-badge"><PartyPopper aria-hidden="true" /><span>Špeciálna udalosť</span><strong>{reservationOccasion(reservation.note)}</strong></div>}
+      {reservationSpecialRequests(reservation.note) && <div className="admin-special-requests"><Sparkles aria-hidden="true" /><div><span>ŠPECIÁLNE POŽIADAVKY</span><strong>{reservationSpecialRequests(reservation.note)}</strong></div></div>}
       {customerRating(reservation.note) && <div className="admin-rating-badge"><span aria-hidden="true">{"★".repeat(customerRating(reservation.note) || 0)}</span><strong>Hodnotenie návštevy {customerRating(reservation.note)}/5</strong></div>}
 
       <form action={saveAdminNote} className="admin-internal-note">

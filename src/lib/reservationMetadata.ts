@@ -3,6 +3,7 @@ const ADMIN_NOTE_PREFIX = "Interná poznámka:";
 const BLOCK_PLACE_PREFIX = "Blokované miesto:";
 const OCCASION_PREFIX = "Udalosť:";
 const RATING_PREFIX = "Hodnotenie:";
+const REQUESTS_PREFIX = "Špeciálne požiadavky:";
 
 export function adminNote(note: string | null) {
   return note?.split("\n").find((line) => line.startsWith(ADMIN_NOTE_PREFIX))?.slice(ADMIN_NOTE_PREFIX.length).trim() || "";
@@ -14,7 +15,15 @@ export function withAdminNote(note: string | null, value: string) {
 }
 
 export function customerVisibleNote(note: string | null) {
-  return (note || "").split("\n").filter((line) => line && !line.startsWith("Miesto:") && !line.startsWith(ADMIN_NOTE_PREFIX) && !line.startsWith(BLOCK_PLACE_PREFIX) && !line.startsWith(OCCASION_PREFIX) && !line.startsWith(RATING_PREFIX)).join("\n").trim();
+  return (note || "").split("\n").filter((line) => line && !line.startsWith("Miesto:") && !line.startsWith(ADMIN_NOTE_PREFIX) && !line.startsWith(BLOCK_PLACE_PREFIX) && !line.startsWith(OCCASION_PREFIX) && !line.startsWith(RATING_PREFIX) && !line.startsWith(REQUESTS_PREFIX)).join("\n").trim();
+}
+
+export function reservationSpecialRequests(note: string | null) {
+  return note?.split("\n").find((line) => line.startsWith(REQUESTS_PREFIX))?.slice(REQUESTS_PREFIX.length).trim() || "";
+}
+
+export function specialRequestsNote(value: string) {
+  return value ? `${REQUESTS_PREFIX} ${value}` : "";
 }
 
 export function customerRating(note: string | null) {

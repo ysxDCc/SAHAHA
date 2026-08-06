@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getReservationTimeSlots } from "@/data/site";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { reservationManageUrl } from "@/lib/reservationManageToken";
-import { BLOCKED_SLOT_NAME, blockedPlace, occasionNote } from "@/lib/reservationMetadata";
+import { BLOCKED_SLOT_NAME, blockedPlace, occasionNote, specialRequestsNote } from "@/lib/reservationMetadata";
 
 type ReservationPayload = Record<string, unknown>;
 const attempts = new Map<string, number[]>();
@@ -31,6 +31,7 @@ function validate(body: ReservationPayload) {
   if (!["Interiér", "Terasa"].includes(text(body.seating))) errors.seating = "Vyberte preferované miesto.";
   if (text(body.occasion) && !["Narodeniny", "Výročie", "Firemná akcia", "Rozlúčka so slobodou", "Iná oslava"].includes(text(body.occasion))) errors.occasion = "Vyberte platnú príležitosť.";
   if (text(body.note).length > 700) errors.note = "Poznámka je príliš dlhá.";
+  if (text(body.preferredTable).length > 80) errors.specialRequests = "Opis špeciálnej požiadavky je príliš dlhý.";
   if (body.privacy !== "accepted") errors.privacy = "Na vybavenie rezervácie potrebujeme váš súhlas.";
   return errors;
 }
@@ -66,7 +67,13 @@ export async function POST(request: NextRequest) {
   if (Object.keys(errors).length) return Response.json({ message: "Skontrolujte označené polia.", errors }, { status: 400 });
 
   const seating = text(body.seating);
-  const storedNote = [`Miesto: ${seating}`, occasionNote(text(body.occasion)), text(body.note)].filter(Boolean).join("\n");
+  const specialRequests = [
+    text(body.requestDecoration) === "yes" ? "narodeninová výzdoba" : "",
+    text(body.requestCake) === "yes" ? "vlastná torta" : "",
+    text(body.requestAccessible) === "yes" ? "bezbariérový prístup" : "",
+    text(body.requestPreferredTable) === "yes" ? `preferovaný stôl${text(body.preferredTable) ? ` (${text(body.preferredTable)})` : ""}` : "",
+  ].filter(Boolean).join(", ");
+  const storedNote = [`Miesto: ${seating}`, occasionNote(text(body.occasion)), specialRequestsNote(specialRequests), text(body.note)].filter(Boolean).join("\n");
   try {
     const supabase = createSupabaseAdminClient();
     const { data: blockedSlots, error: blockError } = await supabase
@@ -103,7 +110,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ message: "Rezerváciu sa nepodarilo uložiť. Skúste to znova alebo nám zavolajte." }, { status: 500 });
     }
     await Promise.allSettled([
-      sendNotification(body, seating),
+      sendNotification(body, seating, specialRequests),
       sendCustomerReceipt(body, data.id),
     ]);
     const response = NextResponse.json({ ok: true, id: data.id }, { status: 201 });
@@ -123,7 +130,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function sendNotification(body: ReservationPayload, seating: string) {
+async function sendNotification(body: ReservationPayload, seating: string, specialRequests: string) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.RESERVATION_NOTIFICATION_EMAIL;
   if (!apiKey || !to) return;
@@ -135,7 +142,7 @@ async function sendNotification(body: ReservationPayload, seating: string) {
       from: process.env.RESEND_FROM_EMAIL || "SAHA BAR <onboarding@resend.dev>",
       to: [to],
       subject: `${isLargeGroup ? "⚠️ VEĽKÁ SKUPINA – " : "Nová rezervácia – "}${text(body.name)}, ${text(body.date)} ${text(body.time)}`,
-      html: `${isLargeGroup ? `<div style="padding:16px;margin-bottom:20px;border:2px solid #c9a56d;border-radius:12px;background:#fff8e8;color:#5a3a00;font-weight:bold">⚠️ PRIORITNÁ REZERVÁCIA PRE ${Number(body.guests)} HOSTÍ – vyžaduje kontrolu kapacity.</div>` : ""}<h2>Nová rezervácia SAHA BAR</h2><p><strong>Meno:</strong> ${escapeHtml(text(body.name))}</p><p><strong>Telefón:</strong> ${escapeHtml(text(body.phone))}</p><p><strong>E-mail:</strong> ${escapeHtml(text(body.email) || "neuvedený")}</p><p><strong>Dátum:</strong> ${escapeHtml(text(body.date))}</p><p><strong>Čas:</strong> ${escapeHtml(text(body.time))}</p><p><strong>Počet osôb:</strong> ${Number(body.guests)}</p><p><strong>Miesto:</strong> ${escapeHtml(seating)}</p><p><strong>Príležitosť:</strong> ${escapeHtml(text(body.occasion) || "bežná návšteva")}</p><p><strong>Poznámka:</strong> ${escapeHtml(text(body.note) || "—")}</p>`,
+      html: `${isLargeGroup ? `<div style="padding:16px;margin-bottom:20px;border:2px solid #c9a56d;border-radius:12px;background:#fff8e8;color:#5a3a00;font-weight:bold">⚠️ PRIORITNÁ REZERVÁCIA PRE ${Number(body.guests)} HOSTÍ – vyžaduje kontrolu kapacity.</div>` : ""}<h2>Nová rezervácia SAHA BAR</h2><p><strong>Meno:</strong> ${escapeHtml(text(body.name))}</p><p><strong>Telefón:</strong> ${escapeHtml(text(body.phone))}</p><p><strong>E-mail:</strong> ${escapeHtml(text(body.email) || "neuvedený")}</p><p><strong>Dátum:</strong> ${escapeHtml(text(body.date))}</p><p><strong>Čas:</strong> ${escapeHtml(text(body.time))}</p><p><strong>Počet osôb:</strong> ${Number(body.guests)}</p><p><strong>Miesto:</strong> ${escapeHtml(seating)}</p><p><strong>Príležitosť:</strong> ${escapeHtml(text(body.occasion) || "bežná návšteva")}</p><p><strong>Špeciálne požiadavky:</strong> ${escapeHtml(specialRequests || "žiadne")}</p><p><strong>Poznámka:</strong> ${escapeHtml(text(body.note) || "—")}</p>`,
     }),
   });
   if (!response.ok) console.error("Reservation notification failed with status", response.status);

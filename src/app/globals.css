@@ -914,6 +914,22 @@ h2 em, h1 em { color: var(--pink); font-weight: 500; }
 .booking-field--occasion b { color: var(--gold); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
 .booking-field--occasion small { color: var(--muted); font-size: .55rem; font-weight: 400; }
 .booking-field--occasion select { width: 100%; border: 0; padding: .25rem 0; background: #0d090b; color: var(--cream); outline: 0; font: inherit; color-scheme: dark; }
+.special-requests { margin: 0 0 1.25rem; padding: 1rem; border: 1px solid rgba(201,165,109,.2); border-radius: 14px; background: rgba(201,165,109,.025); }
+.special-requests legend { display: flex; align-items: center; gap: .55rem; padding: 0 .4rem; color: var(--gold); font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.special-requests legend svg { width: 18px; }
+.special-requests legend small { color: var(--muted); font-size: .55rem; font-weight: 500; }
+.special-requests__options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .65rem; }
+.special-requests__options label { display: flex; align-items: center; gap: .65rem; min-height: 46px; padding: .65rem .8rem; border: 1px solid rgba(244,236,230,.11); border-radius: 11px; color: rgba(244,236,230,.72); font-size: .75rem; cursor: pointer; transition: border-color .2s ease, background .2s ease; }
+.special-requests__options label:has(input:checked) { border-color: rgba(201,165,109,.65); background: rgba(201,165,109,.1); color: var(--cream); }
+.special-requests__options input { width: 17px; height: 17px; accent-color: var(--gold); }
+.special-requests__detail { width: 100%; margin-top: .7rem; padding: .85rem 1rem; border: 1px solid rgba(244,236,230,.12); border-radius: 11px; background: rgba(0,0,0,.2); color: var(--cream); outline: 0; }
+.special-requests__detail:focus { border-color: rgba(201,165,109,.7); }
+.admin-special-requests { display: flex; align-items: flex-start; gap: .75rem; margin-top: 1rem; padding: .9rem 1rem; border: 1px solid rgba(233,179,199,.24); border-radius: 14px; background: linear-gradient(100deg,rgba(143,33,75,.12),rgba(201,165,109,.05)); }
+.admin-special-requests svg { width: 19px; flex: 0 0 auto; color: var(--pink); }
+.admin-special-requests div { display: grid; gap: .15rem; }
+.admin-special-requests span { color: rgba(255,255,255,.4); font-size: .58rem; font-weight: 750; letter-spacing: .14em; }
+.admin-special-requests strong { color: #f3e3d5; font-size: .8rem; line-height: 1.6; }
+@media (max-width: 560px) { .special-requests__options { grid-template-columns: 1fr; } }
 .admin-occasion-badge { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: .55rem; margin-top: 1rem; padding: .8rem 1rem; border: 1px solid rgba(201,165,109,.28); border-radius: 14px; background: linear-gradient(100deg, rgba(201,165,109,.11), rgba(87,18,41,.1)); }
 .admin-occasion-badge svg { width: 19px; color: #e3bd72; }
 .admin-occasion-badge span { color: rgba(255,255,255,.42); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; }

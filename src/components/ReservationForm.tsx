@@ -15,6 +15,7 @@ import {
   PartyPopper,
   Phone,
   ShieldCheck,
+  Sparkles,
   Sofa,
   Trees,
   UserRound,
@@ -315,6 +316,18 @@ export function ReservationForm() {
         <PartyPopper aria-hidden="true" />
         <span><b>Príležitosť <small>nepovinné</small></b><select name="occasion" defaultValue=""><option value="">Bežná návšteva</option><option value="Narodeniny">Narodeniny</option><option value="Výročie">Výročie</option><option value="Firemná akcia">Firemná akcia</option><option value="Rozlúčka so slobodou">Rozlúčka so slobodou</option><option value="Iná oslava">Iná oslava</option></select></span>
       </label>
+
+      <fieldset className="special-requests">
+        <legend><Sparkles aria-hidden="true" /><span>Špeciálne požiadavky <small>nepovinné</small></span></legend>
+        <div className="special-requests__options">
+          <label><input type="checkbox" name="requestDecoration" value="yes" /><span>Narodeninová výzdoba</span></label>
+          <label><input type="checkbox" name="requestCake" value="yes" /><span>Prinesieme vlastnú tortu</span></label>
+          <label><input type="checkbox" name="requestAccessible" value="yes" /><span>Bezbariérový prístup</span></label>
+          <label><input type="checkbox" name="requestPreferredTable" value="yes" /><span>Preferovaný stôl</span></label>
+        </div>
+        <input className="special-requests__detail" name="preferredTable" maxLength={80} placeholder="Číslo stola alebo bližší opis požiadavky…" />
+        {error("specialRequests")}
+      </fieldset>
 
       <label className="booking-note">
         <span><MessageSquareText aria-hidden="true" /><b>Poznámka <small>nepovinné</small></b></span>
