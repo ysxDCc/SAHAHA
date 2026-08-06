@@ -1,6 +1,7 @@
 export const BLOCKED_SLOT_NAME = "__SAHA_BLOCKED_SLOT__";
 const ADMIN_NOTE_PREFIX = "Interná poznámka:";
 const BLOCK_PLACE_PREFIX = "Blokované miesto:";
+const OCCASION_PREFIX = "Udalosť:";
 
 export function adminNote(note: string | null) {
   return note?.split("\n").find((line) => line.startsWith(ADMIN_NOTE_PREFIX))?.slice(ADMIN_NOTE_PREFIX.length).trim() || "";
@@ -12,7 +13,15 @@ export function withAdminNote(note: string | null, value: string) {
 }
 
 export function customerVisibleNote(note: string | null) {
-  return (note || "").split("\n").filter((line) => line && !line.startsWith("Miesto:") && !line.startsWith(ADMIN_NOTE_PREFIX) && !line.startsWith(BLOCK_PLACE_PREFIX)).join("\n").trim();
+  return (note || "").split("\n").filter((line) => line && !line.startsWith("Miesto:") && !line.startsWith(ADMIN_NOTE_PREFIX) && !line.startsWith(BLOCK_PLACE_PREFIX) && !line.startsWith(OCCASION_PREFIX)).join("\n").trim();
+}
+
+export function reservationOccasion(note: string | null) {
+  return note?.split("\n").find((line) => line.startsWith(OCCASION_PREFIX))?.slice(OCCASION_PREFIX.length).trim() || "";
+}
+
+export function occasionNote(value: string) {
+  return value ? `${OCCASION_PREFIX} ${value}` : "";
 }
 
 export function blockedPlace(note: string | null) {

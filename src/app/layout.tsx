@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { SiteChrome } from "@/components/SiteChrome";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 const displayFont = Cormorant_Garamond({
@@ -50,7 +51,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="sk" className={`${displayFont.variable} ${bodyFont.variable}`}>
-      <body><SiteChrome>{children}</SiteChrome></body>
+      <body><ServiceWorkerRegister /><SiteChrome>{children}</SiteChrome></body>
     </html>
   );
 }

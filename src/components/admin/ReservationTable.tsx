@@ -3,9 +3,9 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, Clock3, Hash, Mail, MapPin, MessageSquareText, Phone, StickyNote, UsersRound, type LucideIcon } from "lucide-react";
+import { CalendarDays, Clock3, Hash, Mail, MapPin, MessageSquareText, PartyPopper, Phone, StickyNote, UsersRound, type LucideIcon } from "lucide-react";
 import { saveAdminNote, updateReservationStatus } from "@/app/admin/actions";
-import { adminNote, customerVisibleNote } from "@/lib/reservationMetadata";
+import { adminNote, customerVisibleNote, reservationOccasion } from "@/lib/reservationMetadata";
 import { useHydrationSafeReducedMotion } from "@/lib/useReducedMotion";
 import { DeleteReservationButton } from "./DeleteReservationButton";
 
@@ -114,6 +114,7 @@ function ReservationCard({ reservation, index, reduceMotion }: { reservation: Re
       </motion.div>
 
       {customerNote(reservation.note) && <motion.div initial={reduceMotion ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="admin-visitor-note"><MessageSquareText aria-hidden="true" /><div><span>Poznámka návštevníka</span><p>{customerNote(reservation.note)}</p></div></motion.div>}
+      {reservationOccasion(reservation.note) && <div className="admin-occasion-badge"><PartyPopper aria-hidden="true" /><span>Špeciálna udalosť</span><strong>{reservationOccasion(reservation.note)}</strong></div>}
 
       <form action={saveAdminNote} className="admin-internal-note">
         <input type="hidden" name="id" value={reservation.id} />

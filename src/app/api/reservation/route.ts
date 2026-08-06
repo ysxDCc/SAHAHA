@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getReservationTimeSlots } from "@/data/site";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { reservationManageUrl } from "@/lib/reservationManageToken";
-import { BLOCKED_SLOT_NAME, blockedPlace } from "@/lib/reservationMetadata";
+import { BLOCKED_SLOT_NAME, blockedPlace, occasionNote } from "@/lib/reservationMetadata";
 
 type ReservationPayload = Record<string, unknown>;
 const attempts = new Map<string, number[]>();
@@ -29,6 +29,7 @@ function validate(body: ReservationPayload) {
   const guests = Number(body.guests);
   if (!Number.isInteger(guests) || guests < 1 || guests > 30) errors.guests = "Počet osôb musí byť od 1 do 30.";
   if (!["Interiér", "Terasa"].includes(text(body.seating))) errors.seating = "Vyberte preferované miesto.";
+  if (text(body.occasion) && !["Narodeniny", "Výročie", "Firemná akcia", "Rozlúčka so slobodou", "Iná oslava"].includes(text(body.occasion))) errors.occasion = "Vyberte platnú príležitosť.";
   if (text(body.note).length > 700) errors.note = "Poznámka je príliš dlhá.";
   if (body.privacy !== "accepted") errors.privacy = "Na vybavenie rezervácie potrebujeme váš súhlas.";
   return errors;
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
   if (Object.keys(errors).length) return Response.json({ message: "Skontrolujte označené polia.", errors }, { status: 400 });
 
   const seating = text(body.seating);
-  const storedNote = [`Miesto: ${seating}`, text(body.note)].filter(Boolean).join("\n");
+  const storedNote = [`Miesto: ${seating}`, occasionNote(text(body.occasion)), text(body.note)].filter(Boolean).join("\n");
   try {
     const supabase = createSupabaseAdminClient();
     const { data: blockedSlots, error: blockError } = await supabase
@@ -133,7 +134,7 @@ async function sendNotification(body: ReservationPayload, seating: string) {
       from: process.env.RESEND_FROM_EMAIL || "SAHA BAR <onboarding@resend.dev>",
       to: [to],
       subject: `Nová rezervácia – ${text(body.name)}, ${text(body.date)} ${text(body.time)}`,
-      html: `<h2>Nová rezervácia SAHA BAR</h2><p><strong>Meno:</strong> ${escapeHtml(text(body.name))}</p><p><strong>Telefón:</strong> ${escapeHtml(text(body.phone))}</p><p><strong>E-mail:</strong> ${escapeHtml(text(body.email) || "neuvedený")}</p><p><strong>Dátum:</strong> ${escapeHtml(text(body.date))}</p><p><strong>Čas:</strong> ${escapeHtml(text(body.time))}</p><p><strong>Počet osôb:</strong> ${Number(body.guests)}</p><p><strong>Miesto:</strong> ${escapeHtml(seating)}</p><p><strong>Poznámka:</strong> ${escapeHtml(text(body.note) || "—")}</p>`,
+      html: `<h2>Nová rezervácia SAHA BAR</h2><p><strong>Meno:</strong> ${escapeHtml(text(body.name))}</p><p><strong>Telefón:</strong> ${escapeHtml(text(body.phone))}</p><p><strong>E-mail:</strong> ${escapeHtml(text(body.email) || "neuvedený")}</p><p><strong>Dátum:</strong> ${escapeHtml(text(body.date))}</p><p><strong>Čas:</strong> ${escapeHtml(text(body.time))}</p><p><strong>Počet osôb:</strong> ${Number(body.guests)}</p><p><strong>Miesto:</strong> ${escapeHtml(seating)}</p><p><strong>Príležitosť:</strong> ${escapeHtml(text(body.occasion) || "bežná návšteva")}</p><p><strong>Poznámka:</strong> ${escapeHtml(text(body.note) || "—")}</p>`,
     }),
   });
   if (!response.ok) console.error("Reservation notification failed with status", response.status);

@@ -873,6 +873,28 @@ h2 em, h1 em { color: var(--pink); font-weight: 400; }
   .event-list__image { min-height: 23rem; }
 }
 
+.booking-field--occasion { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .85rem; margin-bottom: 1.25rem; border: 1px solid rgba(201,165,109,.2); border-radius: 12px; padding: .8rem 1rem; background: rgba(201,165,109,.025); }
+.booking-field--occasion > svg { width: 22px; color: var(--gold); stroke-width: 1.4; }
+.booking-field--occasion > span { display: grid; gap: .35rem; }
+.booking-field--occasion b { color: var(--gold); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+.booking-field--occasion small { color: var(--muted); font-size: .55rem; font-weight: 400; }
+.booking-field--occasion select { width: 100%; border: 0; padding: .25rem 0; background: #0d090b; color: var(--cream); outline: 0; font: inherit; color-scheme: dark; }
+.admin-occasion-badge { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: .55rem; margin-top: 1rem; padding: .8rem 1rem; border: 1px solid rgba(201,165,109,.28); border-radius: 14px; background: linear-gradient(100deg, rgba(201,165,109,.11), rgba(87,18,41,.1)); }
+.admin-occasion-badge svg { width: 19px; color: #e3bd72; }
+.admin-occasion-badge span { color: rgba(255,255,255,.42); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; }
+.admin-occasion-badge strong { justify-self: end; color: #f0d9a5; font-family: var(--font-display), serif; font-size: 1.2rem; }
+.admin-header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .6rem; }
+.admin-install-button { min-height: 2.9rem; display: flex; align-items: center; gap: .5rem; border: 1px solid rgba(166,205,143,.28); border-radius: 12px; padding: 0 1rem; background: rgba(166,205,143,.1); color: #dff1d4; cursor: pointer; transition: .2s ease; }
+.admin-install-button:hover { border-color: rgba(166,205,143,.55); background: rgba(166,205,143,.16); transform: translateY(-1px); }
+.admin-install-button svg { width: 17px; }
+.admin-app-installed { color: rgba(223,241,212,.55); font-size: .7rem; }
+@media (max-width: 620px) {
+  .admin-header-actions { align-items: stretch; flex-direction: column; }
+  .admin-header-actions > *, .admin-header-actions form button { width: 100%; justify-content: center; }
+  .admin-occasion-badge { grid-template-columns: auto 1fr; }
+  .admin-occasion-badge strong { grid-column: 2; justify-self: start; }
+}
+
 .admin-internal-note { display: grid; gap: .65rem; margin-top: 1rem; padding: 1rem; border: 1px solid rgba(201,165,109,.16); border-radius: 14px; background: rgba(201,165,109,.035); }
 .admin-internal-note > label { display: flex; align-items: center; gap: .55rem; color: #d9c391; font-size: .68rem; letter-spacing: .11em; text-transform: uppercase; }
 .admin-internal-note > label svg { width: 17px; }

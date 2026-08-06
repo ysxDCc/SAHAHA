@@ -12,6 +12,7 @@ import {
   LoaderCircle,
   Mail,
   MessageSquareText,
+  PartyPopper,
   Phone,
   ShieldCheck,
   Sofa,
@@ -309,6 +310,11 @@ export function ReservationForm() {
           ))}
         </div>
       </fieldset>
+
+      <label className="booking-field booking-field--occasion">
+        <PartyPopper aria-hidden="true" />
+        <span><b>Príležitosť <small>nepovinné</small></b><select name="occasion" defaultValue=""><option value="">Bežná návšteva</option><option value="Narodeniny">Narodeniny</option><option value="Výročie">Výročie</option><option value="Firemná akcia">Firemná akcia</option><option value="Rozlúčka so slobodou">Rozlúčka so slobodou</option><option value="Iná oslava">Iná oslava</option></select></span>
+      </label>
 
       <label className="booking-note">
         <span><MessageSquareText aria-hidden="true" /><b>Poznámka <small>nepovinné</small></b></span>

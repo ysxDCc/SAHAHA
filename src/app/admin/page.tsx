@@ -7,6 +7,7 @@ import { AdminBackground } from "@/components/admin/AdminBackground";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { BLOCKED_SLOT_NAME } from "@/lib/reservationMetadata";
+import { AdminInstallButton } from "@/components/admin/AdminInstallButton";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function AdminPage() {
         <AdminMotion>
           <header className="admin-dashboard-header mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
             <div><p className="text-xs uppercase tracking-[0.35em] text-[#c9dda9]">SAHA BAR · CONCIERGE</p><h1 className="mt-3 font-[family-name:var(--font-display)] text-5xl sm:text-6xl">Rezervácie</h1><p className="mt-2 text-sm text-white/45">Prihlásený: {user.email}</p></div>
-            <form action={logout}><button className="rounded-xl border border-white/15 bg-black/20 px-5 py-3 text-sm backdrop-blur-md transition hover:border-[#a6cd8f] hover:bg-white/5">Odhlásiť sa</button></form>
+            <div className="admin-header-actions"><AdminInstallButton /><form action={logout}><button className="rounded-xl border border-white/15 bg-black/20 px-5 py-3 text-sm backdrop-blur-md transition hover:border-[#a6cd8f] hover:bg-white/5">Odhlásiť sa</button></form></div>
           </header>
         </AdminMotion>
 
