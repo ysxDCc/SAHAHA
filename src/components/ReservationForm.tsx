@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
+  Building2,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -327,6 +328,13 @@ export function ReservationForm() {
         </div>
         <input className="special-requests__detail" name="preferredTable" maxLength={80} placeholder="Číslo stola alebo bližší opis požiadavky…" />
         {error("specialRequests")}
+      </fieldset>
+
+      <fieldset className="private-event-request">
+        <legend><Building2 aria-hidden="true" /><span>Súkromná akcia <small>nepovinné</small></span></legend>
+        <label><input type="checkbox" name="requestPrivateEvent" value="yes" /><span>Chcem požiadať o rezerváciu priestoru pre súkromnú akciu</span></label>
+        <select name="privateEventArea" defaultValue="Celý podnik" aria-label="Priestor pre súkromnú akciu"><option value="Celý podnik">Celý podnik</option><option value="Interiér">Iba interiér</option><option value="Terasa">Iba terasa</option><option value="Oddelená časť">Oddelená časť podniku</option></select>
+        {error("privateEvent")}
       </fieldset>
 
       <label className="booking-note">

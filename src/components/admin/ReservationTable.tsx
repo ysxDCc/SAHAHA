@@ -3,9 +3,9 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, Clock3, Hash, Mail, MapPin, MessageSquareText, PartyPopper, Phone, Sparkles, StickyNote, UsersRound, type LucideIcon } from "lucide-react";
+import { Building2, CalendarDays, Clock3, Hash, Mail, MapPin, MessageCircle, MessageSquareText, PartyPopper, Phone, Sparkles, StickyNote, UsersRound, type LucideIcon } from "lucide-react";
 import { saveAdminNote, updateReservationStatus } from "@/app/admin/actions";
-import { adminNote, customerRating, customerVisibleNote, reservationOccasion, reservationSpecialRequests } from "@/lib/reservationMetadata";
+import { adminNote, customerRating, customerVisibleNote, reservationOccasion, reservationPrivateEvent, reservationSpecialRequests } from "@/lib/reservationMetadata";
 import { useHydrationSafeReducedMotion } from "@/lib/useReducedMotion";
 import { DeleteReservationButton } from "./DeleteReservationButton";
 
@@ -103,6 +103,7 @@ function ReservationCard({ reservation, index, reduceMotion, canDelete }: { rese
       </div>
       {reservation.guests >= 10 && <div className="admin-large-group-alert"><UsersRound aria-hidden="true" /><div><span>PRIORITNÁ REZERVÁCIA</span><strong>Veľká skupina · {reservation.guests} hostí</strong><small>Skontrolujte kapacitu a prípravu stolov.</small></div></div>}
 
+      <QuickContact reservation={reservation} />
       <motion.div className="admin-visitor-grid" initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: reduceMotion ? 0 : 0.045, delayChildren: 0.08 } } }}>
         <Info icon={Phone} label="Telefón"><a href={`tel:${reservation.phone}`}>{reservation.phone}</a></Info>
         <Info icon={Mail} label="E-mail">{reservation.email ? <a href={`mailto:${reservation.email}`}>{reservation.email}</a> : <span className="text-white/30">Neuvedený</span>}</Info>
@@ -118,6 +119,8 @@ function ReservationCard({ reservation, index, reduceMotion, canDelete }: { rese
       {reservationOccasion(reservation.note) && <div className="admin-occasion-badge"><PartyPopper aria-hidden="true" /><span>Špeciálna udalosť</span><strong>{reservationOccasion(reservation.note)}</strong></div>}
       {reservationSpecialRequests(reservation.note) && <div className="admin-special-requests"><Sparkles aria-hidden="true" /><div><span>ŠPECIÁLNE POŽIADAVKY</span><strong>{reservationSpecialRequests(reservation.note)}</strong></div></div>}
       {customerRating(reservation.note) && <div className="admin-rating-badge"><span aria-hidden="true">{"★".repeat(customerRating(reservation.note) || 0)}</span><strong>Hodnotenie návštevy {customerRating(reservation.note)}/5</strong></div>}
+
+      {reservationPrivateEvent(reservation.note) && <div className="admin-private-event"><Building2 aria-hidden="true" /><div><span>ŽIADOSŤ O SÚKROMNÚ AKCIU</span><strong>{reservationPrivateEvent(reservation.note)}</strong><small>Kontaktujte zákazníka a dohodnite dostupnosť, cenu a podmienky.</small></div></div>}
 
       <form action={saveAdminNote} className="admin-internal-note">
         <input type="hidden" name="id" value={reservation.id} />
@@ -135,6 +138,19 @@ function ReservationCard({ reservation, index, reduceMotion, canDelete }: { rese
       </div>
     </motion.article>
   );
+}
+
+const quickMessages = [
+  { label: "Stôl je pripravený", text: "Dobrý deň, váš stôl v SAHA BARE je pripravený. Tešíme sa na vás." },
+  { label: "Prosíme, zavolajte nám", text: "Dobrý deň, prosíme, ozvite sa nám telefonicky ohľadom vašej rezervácie v SAHA BARE na čísle 037 642 41 11." },
+  { label: "Potvrdenie rezervácie", text: "Dobrý deň, potvrdzujeme vašu rezerváciu v SAHA BARE. Tešíme sa na vašu návštevu." },
+  { label: "Meškanie stola", text: "Dobrý deň, príprava vášho stola sa mierne oneskorí. Ďakujeme za pochopenie, ozveme sa hneď, ako bude pripravený." },
+] as const;
+
+function QuickContact({ reservation }: { reservation: Reservation }) {
+  const [messageIndex, setMessageIndex] = useState(0);
+  const message = `${quickMessages[messageIndex].text}\n\nRezervácia: ${formatDate(reservation.reservation_date)} o ${reservation.reservation_time.slice(0, 5)}.`;
+  return <div className="admin-quick-contact"><div className="admin-quick-contact__heading"><MessageCircle aria-hidden="true" /><span>RÝCHLY KONTAKT</span></div><select value={messageIndex} onChange={(event) => setMessageIndex(Number(event.target.value))} aria-label="Vybrať pripravenú správu">{quickMessages.map((item, index) => <option key={item.label} value={index}>{item.label}</option>)}</select><div className="admin-quick-contact__actions"><a className="is-call" href={`tel:${reservation.phone}`}><Phone aria-hidden="true" />Zavolať</a><a href={`sms:${reservation.phone}?body=${encodeURIComponent(message)}`}><MessageCircle aria-hidden="true" />Poslať SMS</a>{reservation.email && <a href={`mailto:${reservation.email}?subject=${encodeURIComponent("Vaša rezervácia v SAHA BARE")}&body=${encodeURIComponent(message)}`}><Mail aria-hidden="true" />Poslať e-mail</a>}</div></div>;
 }
 
 function Info({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: React.ReactNode }) {
